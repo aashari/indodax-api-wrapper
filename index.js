@@ -54,12 +54,11 @@ let doRequest = (path, callback) => {
             if (response.body) {
                 console.log("doRequest request error {response} ", response);
             }
-            throw Error(error);
+            callback(error, null);
+        } else {
+            let responsePayload = JSON.parse(response.body);
+            callback(null, responsePayload);
         }
-
-        let responsePayload = JSON.parse(response.body);
-
-        callback(responsePayload);
 
     });
 
@@ -98,15 +97,15 @@ let doRequestEncrypted = (payload, callback) => {
                 console.log("doRequestEncrypted request error {response} ", response);
             }
             throw Error(error);
+        } else {
+            let responsePayload = JSON.parse(response.body);
+            if (responsePayload.success !== 1) {
+                console.log(responsePayload);
+                callback(Error("doRequestEncrypted request {responsePayload.success} failed!"), null);
+            } else {
+                callback(null, responsePayload.return);
+            }
         }
-
-        let responsePayload = JSON.parse(response.body);
-
-        if (responsePayload.success !== 1) {
-            throw Error("doRequestEncrypted request {responsePayload.success} failed!", responsePayload);
-        }
-
-        callback(responsePayload.return);
 
     });
 
@@ -123,17 +122,13 @@ module.exports = {
     getInfo: (callback) => {
         doRequestEncrypted({
             method: 'getInfo'
-        }, (response) => {
-            callback(response);
-        });
+        }, callback);
     },
 
     transHistory: (callback) => {
         doRequestEncrypted({
             method: 'transHistory'
-        }, (response) => {
-            callback(response);
-        });
+        }, callback);
     },
 
     trade: (payload, callback) => {
@@ -144,9 +139,7 @@ module.exports = {
 
         Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
 
-        doRequestEncrypted(compiledPayload, (response) => {
-            callback(response);
-        });
+        doRequestEncrypted(compiledPayload, callback);
 
     },
 
@@ -158,9 +151,7 @@ module.exports = {
 
         Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
 
-        doRequestEncrypted(compiledPayload, (response) => {
-            callback(response);
-        });
+        doRequestEncrypted(compiledPayload, callback);
 
     },
 
@@ -172,9 +163,7 @@ module.exports = {
 
         Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
 
-        doRequestEncrypted(compiledPayload, (response) => {
-            callback(response);
-        });
+        doRequestEncrypted(compiledPayload, callback);
 
     },
 
@@ -186,9 +175,7 @@ module.exports = {
 
         Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
 
-        doRequestEncrypted(compiledPayload, (response) => {
-            callback(response);
-        });
+        doRequestEncrypted(compiledPayload, callback);
 
     },
 
@@ -200,9 +187,7 @@ module.exports = {
 
         Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
 
-        doRequestEncrypted(compiledPayload, (response) => {
-            callback(response);
-        });
+        doRequestEncrypted(compiledPayload, callback);
 
     },
 
@@ -214,9 +199,7 @@ module.exports = {
 
         Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
 
-        doRequestEncrypted(compiledPayload, (response) => {
-            callback(response);
-        });
+        doRequestEncrypted(compiledPayload, callback);
 
     },
 
