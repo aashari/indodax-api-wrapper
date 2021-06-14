@@ -84,11 +84,29 @@ To see full detail of private API documentation (to get the detail parameter req
 
 
 ## Example of Usage
+
+### Get User Information
 ```
     const indodaxAPIWrapper = require('indodax-api-wrapper');
     indodaxAPIWrapper.configure("{{YOUR_API_KEY}}", "{{YOUR_API_SECRET}}", {{IS_DEBUGGING}});
     
-    indodaxAPIWrapper.getInfo(response=>{
+    indodaxAPIWrapper.getInfo((error, response)=>{
         console.log(response)
     })
+```
+
+### Do Trade
+```
+    const indodaxAPIWrapper = require('indodax-api-wrapper');
+    indodaxAPIWrapper.configure("{{YOUR_API_KEY}}", "{{YOUR_API_SECRET}}", {{IS_DEBUGGING}});
+    
+    indodaxAPIWrapper.trade({
+        pair: 'btc_idr',
+        type: 'sell',
+        price: 568155000,
+        btc: 0.0352168800
+    }, (error, response) => {
+        if (error) console.log(error);
+        if (response) console.log(response);
+    });
 ```
