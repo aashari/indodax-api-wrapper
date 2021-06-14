@@ -133,6 +133,14 @@ module.exports = {
         IS_DEBUGGING = isDebugging === true || isDebugging === 'true' || isDebugging === 1
     },
 
+    setNonce: (nonce) => {
+        latestNonce = nonce;
+    },
+
+    getNonce: () => {
+        return latestNonce;
+    },
+
     getInfo: (callback) => {
         doRequestEncrypted({
             method: 'getInfo'
