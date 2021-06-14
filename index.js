@@ -58,8 +58,13 @@ let doRequest = (path, callback) => {
             }
             callback(error, null);
         } else {
-            let responsePayload = JSON.parse(response.body);
-            callback(null, responsePayload);
+            try {
+                let responsePayload = JSON.parse(response.body);
+                callback(null, responsePayload);
+            } catch (e) {
+                console.log("doRequest request error {response.body} ", response.body)
+                callback(Error(response.body), null);
+            }
         }
 
     });
