@@ -139,7 +139,7 @@ module.exports = {
     trade: (payload, callback) => {
 
         let compiledPayload = {
-            method: 'transHistory'
+            method: 'trade'
         };
 
         Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
