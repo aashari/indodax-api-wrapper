@@ -76,9 +76,12 @@ let doRequestEncrypted = (payload, callback) => {
     }
 
     if (!payload.nonce) {
+        process.env.TZ = 'Asia/Singapore'
         let hrTime = process.hrtime();
-        payload.nonce = parseFloat((hrTime[0] * 1000000 + hrTime[1] / 1000).toFixed(4).toString().replace('.', ''));
+        payload.nonce = parseFloat(6286565215726040 + (parseFloat((hrTime[0] * 1000000 + hrTime[1] / 1000).toFixed(4).toString().replace('.', ''))));
     }
+
+    console.log(payload.nonce);
 
     if (IS_DEBUGGING) {
         console.log("doRequestEncrypted {payload}", payload);
