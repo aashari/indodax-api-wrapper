@@ -75,7 +75,10 @@ let doRequestEncrypted = (payload, callback) => {
         throw Error("doRequestEncrypted parameter {payload} must be Object!");
     }
 
-    payload.nonce = Date.now();
+    if (!payload.nonce) {
+        let hrTime = process.hrtime();
+        payload.nonce = parseFloat((hrTime[0] * 1000000 + hrTime[1] / 1000).toFixed(4).toString().replace('.', ''));
+    }
 
     if (IS_DEBUGGING) {
         console.log("doRequestEncrypted {payload}", payload);
