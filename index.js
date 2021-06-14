@@ -8,6 +8,8 @@ let IS_DEBUGGING = process.env.IS_DEBUGGING;
 let IDX_KEY = process.env.IDX_KEY;
 let IDX_SECRRET = process.env.IDX_SECRRET;
 
+let latestNonce = 0;
+
 let objectToQueryString = (payload) => {
     return Object.keys(payload).map(key => `${key}=${payload[key]}`).join('&');
 }
@@ -77,8 +79,7 @@ let doRequestEncrypted = (payload, callback) => {
 
     if (!payload.nonce) {
         process.env.TZ = 'Asia/Singapore'
-        let hrTime = process.hrtime();
-        payload.nonce = parseFloat(6286565215726040 + (parseFloat((hrTime[0] * 1000000 + hrTime[1] / 1000).toFixed(4).toString().replace('.', ''))));
+        payload.nonce = latestNonce + Date.now();
     }
 
     console.log(payload.nonce);
@@ -107,6 +108,9 @@ let doRequestEncrypted = (payload, callback) => {
             let responsePayload = JSON.parse(response.body);
             if (responsePayload.success !== 1) {
                 console.log(responsePayload);
+                if (responsePayload.error_code === 'invalid_nonce') {
+                    latestNonce = parseFloat((responsePayload.error.split(' ')[5]).replace('.', ''));
+                }
                 callback(Error("doRequestEncrypted request {responsePayload.success} failed!"), null);
             } else {
                 callback(null, responsePayload.return);
