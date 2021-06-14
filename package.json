@@ -1,0 +1,23 @@
+{
+  "name": "indodax-api-wrapper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aashari/indodax-api-wrapper.git"
+  },
+  "author": "aashari",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aashari/indodax-api-wrapper/issues"
+  },
+  "homepage": "https://github.com/aashari/indodax-api-wrapper#readme",
+  "dependencies": {
+    "crypto-js": "^4.0.0",
+    "request": "^2.88.2"
+  }
+}
