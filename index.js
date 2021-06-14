@@ -80,9 +80,8 @@ let doRequestEncrypted = (payload, callback) => {
     if (!payload.nonce) {
         process.env.TZ = 'Asia/Singapore'
         payload.nonce = latestNonce + Date.now();
+        latestNonce = payload.nonce + 1;
     }
-
-    console.log(payload.nonce);
 
     if (IS_DEBUGGING) {
         console.log("doRequestEncrypted {payload}", payload);
