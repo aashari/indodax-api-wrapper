@@ -6,7 +6,7 @@ const IDX_PUBLIC_ENDPOINT = "https://indodax.com/api";
 
 let IS_DEBUGGING = process.env.IS_DEBUGGING;
 let IDX_KEY = process.env.IDX_KEY;
-let IDX_SECRRET = process.env.IDX_SECRRET;
+let IDX_SECRET = process.env.IDX_SECRET;
 
 let latestNonce = 0;
 
@@ -34,7 +34,7 @@ let signPayload = (payload) => {
         console.log("signPayload {stringPayload}", stringPayload);
     }
 
-    encryptedPayload = hmacSHA512(stringPayload, IDX_SECRRET).toString();
+    encryptedPayload = hmacSHA512(stringPayload, IDX_SECRET).toString();
 
     if (IS_DEBUGGING) {
         console.log("signPayload {encryptedPayload}", encryptedPayload);
@@ -125,7 +125,7 @@ module.exports = {
 
     configure: (key, secret, isDebugging = false) => {
         IDX_KEY = key;
-        IDX_SECRRET = secret;
+        IDX_SECRET = secret;
         IS_DEBUGGING = isDebugging === true || isDebugging === 'true' || isDebugging === 1
     },
 
