@@ -45,12 +45,10 @@ let signPayload = (payload) => {
 }
 
 let doRequest = (path, callback) => {
-
     request({
         'method': 'POST',
         'url': IDX_PUBLIC_ENDPOINT + '/' + path,
     }, function(error, response) {
-
         if (error) {
             console.log("doRequest request error {error}", error);
             if (response.body) {
@@ -66,9 +64,7 @@ let doRequest = (path, callback) => {
                 callback(Error(response.body), null);
             }
         }
-
     });
-
 }
 
 let doRequestEncrypted = (payload, callback) => {
@@ -127,13 +123,16 @@ let doRequestEncrypted = (payload, callback) => {
 
 module.exports = {
 
-    configure: (key, secret, isDebugging) => {
+    configure: (key, secret, isDebugging = false) => {
         IDX_KEY = key;
         IDX_SECRRET = secret;
         IS_DEBUGGING = isDebugging === true || isDebugging === 'true' || isDebugging === 1
     },
 
     setNonce: (nonce) => {
+        if (isNaN(nonce)) {
+            throw Error("setNonce {nonce} must be a number!");
+        }
         latestNonce = nonce;
     },
 
@@ -141,88 +140,69 @@ module.exports = {
         return latestNonce;
     },
 
-    getInfo: (callback) => {
-        doRequestEncrypted({
+    getInfo: (payload = {}, callback) => {
+        let compiledPayload = {
             method: 'getInfo'
-        }, callback);
+        };
+        Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
+        doRequestEncrypted(compiledPayload, callback);
     },
 
-    transHistory: (callback) => {
-        doRequestEncrypted({
+    transHistory: (payload = {}, callback) => {
+        let compiledPayload = {
             method: 'transHistory'
-        }, callback);
+        };
+        Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
+        doRequestEncrypted(compiledPayload, callback);
     },
 
     trade: (payload, callback) => {
-
         let compiledPayload = {
             method: 'trade'
         };
-
         Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
-
         doRequestEncrypted(compiledPayload, callback);
 
     },
 
     tradeHistory: (payload, callback) => {
-
         let compiledPayload = {
             method: 'tradeHistory'
         };
-
         Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
-
         doRequestEncrypted(compiledPayload, callback);
-
     },
 
     openOrders: (payload, callback) => {
-
         let compiledPayload = {
             method: 'openOrders'
         };
-
         Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
-
         doRequestEncrypted(compiledPayload, callback);
-
     },
 
     orderHistory: (payload, callback) => {
-
         let compiledPayload = {
             method: 'orderHistory'
         };
-
         Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
-
         doRequestEncrypted(compiledPayload, callback);
-
     },
 
     getOrder: (payload, callback) => {
-
         let compiledPayload = {
             method: 'getOrder'
         };
-
         Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
-
         doRequestEncrypted(compiledPayload, callback);
-
     },
 
     cancelOrder: (payload, callback) => {
-
         let compiledPayload = {
             method: 'cancelOrder'
         };
-
         Object.keys(payload).map(key => compiledPayload[key] = payload[key]);
-
         doRequestEncrypted(compiledPayload, callback);
-
     },
 
     getTicker: (pair, callback) => {

@@ -17,42 +17,42 @@ Also, be sure to have `git` available in your PATH, `npm` might need it (You can
 
   You can install nodejs and npm easily with apt install, just run the following commands.
 ```
-      $ sudo apt install nodejs
-      $ sudo apt install npm
+sudo apt install nodejs
+sudo apt install npm
 ```
 - #### Other Operating Systems
   You can find more information about the installation on the [official Node.js website](https://nodejs.org/) and the [official NPM website](https://npmjs.org/).
 
 If the installation was successful, you should be able to run the following command.
 ```
-    $ node --version
-    v15.8.0
+node --version
+v15.8.0
 
-    $ npm --version
-    7.5.1
+npm --version
+7.5.1
 ```
 If you need to update `npm`, you can make it using `npm`! Cool right? After running the following command, just open again the command line and be happy.
 ```
-    $ npm install npm -g
+npm install npm -g
 ```
 ###
 ### Yarn installation
   After installing node, this project will need yarn too, so just run the following command.
 ```
-      $ npm install -g yarn
+npm install -g yarn
 ```
 ---
 
 ## Install
 ```
-    $ npm instalal indodax-api-wraapper
+npm instalal indodax-api-wraapper
 ```
 ## Configure app
 
 You need to provide your Indodax API and Secret key to use this package, this is an example of how to configure the package:
 ```
-    const indodaxAPIWrapper = require('indodax-api-wrapper');
-    indodaxAPIWrapper.configure("{{YOUR_API_KEY}}", "{{YOUR_API_SECRET}}", {{IS_DEBUGGING}});
+const indodaxAPIWrapper = require('indodax-api-wrapper');
+indodaxAPIWrapper.configure("{{YOUR_API_KEY}}", "{{YOUR_API_SECRET}}", {{IS_DEBUGGING}});
 ```
 The `configure` function required 3 mandatory parameters,
 * `key` is your Indodax API Key
@@ -80,6 +80,11 @@ These are the available public functions that can you consume by using this pack
 * getTrades: This method gives you pair trades
 * getDepth: This method gives you pair depth
 
+Package configuration functions:
+* configure($key, $secret, $isDebugging)
+* setNonce($nonce)
+* getNonce
+
 To see full detail of private API documentation (to get the detail parameter required for each function), you can refer to the Indodax official [documentation here](https://indodax.com/downloads/INDODAXCOM-API-DOCUMENTATION.pdf)
 
 
@@ -87,26 +92,25 @@ To see full detail of private API documentation (to get the detail parameter req
 
 ### Get User Information
 ```
-    const indodaxAPIWrapper = require('indodax-api-wrapper');
-    indodaxAPIWrapper.configure("{{YOUR_API_KEY}}", "{{YOUR_API_SECRET}}", {{IS_DEBUGGING}});
-    
-    indodaxAPIWrapper.getInfo((error, response)=>{
-        console.log(response)
-    })
+const indodaxAPIWrapper = require('indodax-api-wrapper');
+indodaxAPIWrapper.configure("{{YOUR_API_KEY}}", "{{YOUR_API_SECRET}}", {{IS_DEBUGGING}});
+indodaxAPIWrapper.getInfo({}, (error, response)=>{
+    console.log(response)
+})
 ```
 
 ### Do Trade
 ```
-    const indodaxAPIWrapper = require('indodax-api-wrapper');
-    indodaxAPIWrapper.configure("{{YOUR_API_KEY}}", "{{YOUR_API_SECRET}}", {{IS_DEBUGGING}});
-    
-    indodaxAPIWrapper.trade({
-        pair: 'btc_idr',
-        type: 'sell',
-        price: 568155000,
-        btc: 0.0352168800
-    }, (error, response) => {
-        if (error) console.log(error);
-        if (response) console.log(response);
-    });
+const indodaxAPIWrapper = require('indodax-api-wrapper');
+indodaxAPIWrapper.configure("{{YOUR_API_KEY}}", "{{YOUR_API_SECRET}}", {{IS_DEBUGGING}});
+
+indodaxAPIWrapper.trade({
+    pair: 'btc_idr',
+    type: 'sell',
+    price: 568155000,
+    btc: 0.0352168800
+}, (error, response) => {
+    if (error) console.log(error);
+    if (response) console.log(response);
+});
 ```
