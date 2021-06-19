@@ -61,7 +61,7 @@ let doRequest = (path, callback) => {
                 callback(null, responsePayload);
             } catch (e) {
                 console.log("doRequest request error {response.body} ", response.body)
-                callback(Error(response.body), null);
+                callback(e, null);
             }
         }
     });
@@ -111,7 +111,7 @@ let doRequestEncrypted = (payload, callback) => {
                 if (responsePayload.error_code === 'invalid_nonce') {
                     latestNonce = parseFloat((responsePayload.error.split(' ')[5]).replace('.', ''));
                 }
-                callback(Error("doRequestEncrypted request {responsePayload.success} failed!"), null);
+                callback(Error("doRequestEncrypted request {responsePayload.success} failed!", responsePayload), null);
             } else {
                 callback(null, responsePayload.return);
             }
