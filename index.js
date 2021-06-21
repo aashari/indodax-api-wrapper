@@ -90,10 +90,8 @@ let doRequestEncrypted = (payload, retryLimit = 5) => {
                     return reject(error)
                 } else if (responsePayload && responsePayload.success == 0 && responsePayload.error_code == 'invalid_nonce' && retryLimit > 0) {
                     let latestNonce = parseFloat(responsePayload.error.split(' ')[5].split('.')[0]);
-                    console.log(latestNonce);
                     return storage.setItem('nonce-' + IDX_KEY, latestNonce + 1).then((successSetNonce) => {
-                        payload.nonce = latestNonce + 1;
-                        return doRequestEncrypted(payload, retryLimit - 1);
+                        doRequestEncrypted(payload, retryLimit - 1).then(response => resolve(response), error => reject(error));
                     });
                 } else if (responsePayload.success == 0) {
                     return reject(`doRequestEncrypted error: ${JSON.stringify(responsePayload)}`);
