@@ -1,20 +1,53 @@
-const request = require('request');
-const hmacSHA512 = require('crypto-js/hmac-sha512');
+const axios = require('axios').default;
 const storage = require('node-persist');
+const hmacSHA512 = require('crypto-js/hmac-sha512');
 
 const IDX_PRIVATE_ENDPOINT = "https://indodax.com/tapi";
 const IDX_PUBLIC_ENDPOINT = "https://indodax.com/api";
 
 let IDX_KEY = process.env.IDX_KEY;
 let IDX_SECRET = process.env.IDX_SECRET;
+let IDX_IS_DEBUGGING = process.env.IDX_IS_DEBUGGING || false;
+let IDX_RESPONSE_TTL = process.env.IDX_RESPONSE_TTL || 0;
+let IDX_CACHE_DIRECTORY_PATH = process.env.IDX_CACHE_DIRECTORY_PATH || '/tmp/aashari/indodax-api-wrapper';
 
-let objectToQueryString = (payload) => {
-    return Object.keys(payload).map(key => `${key}=${payload[key]}`).join('&');
+let _doPrivateRequestNonceHandler = (payload, cachedNonce) => {
+
+    payload.nonce = parseInt(cachedNonce);
+
+    if (IDX_IS_DEBUGGING) {
+        console.log("doPrivateRequest", payload);
+    }
+
+    payloadQueryString = Object.keys(payload).map(key => `${key}=${payload[key]}`).join('&');
+    encryptedPayload = hmacSHA512(payloadQueryString, IDX_SECRET).toString();
+
+    return axios.post(IDX_PRIVATE_ENDPOINT, payloadQueryString, {
+        headers: {
+            'Key': IDX_KEY,
+            'Sign': encryptedPayload
+        }
+    }).then(response => {
+
+        let responseData = response.data;
+
+        if (responseData.error_code === 'invalid_nonce') {
+            let latestNonce = parseFloat(responseData.error.split(' ')[5].split('.')[0]) + Date.now();
+            let nonceCacheConfiguration = { ttl: false };
+            return storage.setItem('doPrivateRequest-nonce', latestNonce, nonceCacheConfiguration).then(_ => doPrivateRequest(payload));
+        }
+
+        delete payload.nonce;
+
+        return storage.setItem(`doPrivateRequest@${JSON.stringify(payload)}`, responseData).then(_ => responseData)
+
+    });
+
 }
 
-let signPayload = (payload) => {
+let doPrivateRequest = (payload) => {
 
-    if (payload === null) {
+    if (!payload) {
         throw Error("signPayload parameter {payload} must be filled!");
     }
 
@@ -22,121 +55,72 @@ let signPayload = (payload) => {
         throw Error("signPayload parameter {payload} must be Object!");
     }
 
-    stringPayload = objectToQueryString(payload);
-    encryptedPayload = hmacSHA512(stringPayload, IDX_SECRET).toString();
-
-    return encryptedPayload;
+    return storage.getItem('doPrivateRequest-nonce').then(cachedNonce => {
+        return (cachedNonce ? cachedNonce : 0) + Date.now();
+    }).then(cachedNonce => _doPrivateRequestNonceHandler(payload, cachedNonce));
 
 }
 
-let doRequest = (path) => {
-    return new Promise((resolve, reject) => {
-        request({
-            'method': 'POST',
-            'url': IDX_PUBLIC_ENDPOINT + '/' + path,
-        }, function(error, response) {
+let doPublicRequest = (pair, path) => {
 
-            let responsePayload = null;
-            try {
-                responsePayload = JSON.parse(response.body);
-            } catch (e) {
-                responsePayload = {};
-            }
+    if (IDX_IS_DEBUGGING) {
+        console.log("doPublicRequest", pair, path);
+    }
 
-            if (error) {
-                return reject(error);
-            } else {
-                return resolve(responsePayload);
-            }
+    return axios.post(`${IDX_PUBLIC_ENDPOINT}/${pair}/${path}`).then((succes) => {
 
-        });
-    });
-}
+        let responsePayload = succes.data;
 
-let doRequestEncrypted = (payload, retryLimit = 5) => {
-
-    return new Promise((resolve, reject) => {
-
-        if (payload === null) {
-            return reject(`doRequestEncrypted parameter {payload} must be filled! given ${payload}`);
+        if (typeof responsePayload === 'string') {
+            responsePayload = responsePayload.replaceAll("'", '"');
         }
 
-        if (typeof payload !== 'object') {
-            return reject(`doRequestEncrypted parameter {payload} must be Object! given ${typeof payload}`)
+        if (responsePayload.error) {
+            throw new Error(responsePayload);
+        } else {
+            return storage.setItem(`doPublicRequest@${pair}-${path}`, responsePayload).then(_ => responsePayload)
         }
-
-        return storage.getItem('nonce-' + IDX_KEY).then((nonce) => {
-
-            payload.nonce = nonce || 1;
-
-            request({
-                'method': 'POST',
-                'url': IDX_PRIVATE_ENDPOINT,
-                'headers': {
-                    'Key': IDX_KEY,
-                    'Sign': signPayload(payload)
-                },
-                'formData': payload
-            }, function(error, response) {
-
-                let responsePayload = null;
-                try {
-                    responsePayload = JSON.parse(response.body);
-                } catch (e) {
-                    responsePayload = {};
-                }
-
-                if (error) {
-                    return reject(error)
-                } else if (responsePayload && responsePayload.success == 0 && responsePayload.error_code == 'invalid_nonce' && retryLimit > 0) {
-                    let latestNonce = parseFloat(responsePayload.error.split(' ')[5].split('.')[0]);
-                    return storage.setItem('nonce-' + IDX_KEY, latestNonce + 1).then((successSetNonce) => {
-                        doRequestEncrypted(payload, retryLimit - 1).then(response => resolve(response), error => reject(error));
-                    });
-                } else if (responsePayload.success == 0) {
-                    return reject(`doRequestEncrypted error: ${JSON.stringify(responsePayload)}`);
-                } else {
-                    return storage.setItem('nonce-' + IDX_KEY, payload.nonce + 1).then((successSetNonce) => {
-                        return resolve(responsePayload);
-                    });
-                }
-
-            });
-
-        });
 
     });
 
 }
+
+let doCachePublicRequest = (pair, path, disableCache = false) => {
+    return storage.init({
+        dir: IDX_CACHE_DIRECTORY_PATH,
+        ttl: IDX_RESPONSE_TTL * 1000
+    }).then(_ => {
+        return storage.getItem(`doPublicRequest@${pair}-${path}`).then((responseCached) => {
+            if (responseCached && disableCache == false) {
+                if (IDX_IS_DEBUGGING) console.log("doCachePublicRequest", pair, path)
+                return responseCached;
+            }
+            return doPublicRequest(pair, path).then(responseRealTime => responseRealTime)
+        });
+    }).finally(_ => {
+        storage.removeExpiredItems();
+    })
+}
+
+let doCachePrivateRequest = (payload, disableCache = false) => {
+    return storage.init({
+        dir: IDX_CACHE_DIRECTORY_PATH,
+        ttl: IDX_RESPONSE_TTL * 1000
+    }).then(_ => {
+        return storage.getItem(`doPrivateRequest@${JSON.stringify(payload)}`).then((responseCached) => {
+            if (responseCached && disableCache == false) {
+                if (IDX_IS_DEBUGGING) console.log("doCachePrivateRequest", payload)
+                return responseCached;
+            }
+            return doPrivateRequest(payload).then(responseRealTime => responseRealTime)
+        });
+    }).finally(_ => {
+        storage.removeExpiredItems();
+    })
+}
+
 
 module.exports = {
-
-    configure: (key, secret) => {
-        IDX_KEY = key;
-        IDX_SECRET = secret;
-    },
-
-    getLatestNonce: () => {
-        return storage.init().then((response) => {
-            return storage.getItem('nonce-' + IDX_KEY);
-        });
-    },
-
-    setInitialtNonce: (nonce) => {
-        return storage.init().then((response) => {
-            return storage.setItem('nonce-' + IDX_KEY, nonce);
-        });
-    },
-
-    privateRequest: (method, payload = {}) => {
-        return storage.init().then((response) => {
-            payload.method = method;
-            return doRequestEncrypted(payload);
-        })
-    },
-
-    publicRequest: (pair, path) => {
-        return doRequest(pair + '/' + path);
-    },
-
+    privateRequest: doCachePrivateRequest,
+    publicRequest: doCachePublicRequest
 }
