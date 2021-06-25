@@ -11,6 +11,8 @@ let IDX_IS_DEBUGGING = process.env.IDX_IS_DEBUGGING || false;
 let IDX_RESPONSE_TTL = process.env.IDX_RESPONSE_TTL || 0;
 let IDX_CACHE_DIRECTORY_PATH = process.env.IDX_CACHE_DIRECTORY_PATH || '/tmp/aashari/indodax-api-wrapper';
 
+let nodePersistent = null;
+
 let _doPrivateRequestNonceHandler = (payload, cachedNonce) => {
 
     payload.nonce = parseInt(cachedNonce);
@@ -86,37 +88,41 @@ let doPublicRequest = (pair, path) => {
 }
 
 let doCachePublicRequest = (pair, path, disableCache = false) => {
-    return storage.init({
-        dir: IDX_CACHE_DIRECTORY_PATH,
-        ttl: IDX_RESPONSE_TTL * 1000
-    }).then(_ => {
-        return storage.getItem(`doPublicRequest@${pair}-${path}`).then((responseCached) => {
-            if (responseCached && disableCache == false) {
-                if (IDX_IS_DEBUGGING) console.log("doCachePublicRequest", pair, path)
-                return responseCached;
-            }
-            return doPublicRequest(pair, path).then(responseRealTime => responseRealTime)
+    if (!nodePersistent) {
+        return storage.init({
+            dir: IDX_CACHE_DIRECTORY_PATH,
+            ttl: IDX_RESPONSE_TTL * 1000
+        }).then(response => {
+            nodePersistent = response;
+            return doCachePublicRequest(pair, path, disableCache);
         });
-    }).finally(_ => {
-        storage.removeExpiredItems();
-    })
+    }
+    return storage.getItem(`doPublicRequest@${pair}-${path}`).then((responseCached) => {
+        if (responseCached && disableCache == false) {
+            if (IDX_IS_DEBUGGING) console.log("doCachePublicRequest", pair, path)
+            return responseCached;
+        }
+        return doPublicRequest(pair, path).then(responseRealTime => responseRealTime)
+    });
 }
 
 let doCachePrivateRequest = (payload, disableCache = false) => {
-    return storage.init({
-        dir: IDX_CACHE_DIRECTORY_PATH,
-        ttl: IDX_RESPONSE_TTL * 1000
-    }).then(_ => {
-        return storage.getItem(`doPrivateRequest@${JSON.stringify(payload)}`).then((responseCached) => {
-            if (responseCached && disableCache == false) {
-                if (IDX_IS_DEBUGGING) console.log("doCachePrivateRequest", payload)
-                return responseCached;
-            }
-            return doPrivateRequest(payload).then(responseRealTime => responseRealTime)
+    if (!nodePersistent) {
+        return storage.init({
+            dir: IDX_CACHE_DIRECTORY_PATH,
+            ttl: IDX_RESPONSE_TTL * 1000
+        }).then(response => {
+            nodePersistent = response;
+            return doCachePrivateRequest(payload, disableCache);
         });
-    }).finally(_ => {
-        storage.removeExpiredItems();
-    })
+    }
+    return storage.getItem(`doPrivateRequest@${JSON.stringify(payload)}`).then((responseCached) => {
+        if (responseCached && disableCache == false) {
+            if (IDX_IS_DEBUGGING) console.log("doCachePrivateRequest", payload)
+            return responseCached;
+        }
+        return doPrivateRequest(payload).then(responseRealTime => responseRealTime)
+    });
 }
 
 
