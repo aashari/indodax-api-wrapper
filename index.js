@@ -178,6 +178,7 @@ let init = () => {
 }
 
 module.exports = {
+    storage: storage,
     init: init,
     privateRequest: doCachePrivateRequest,
     publicRequest: doCachePublicRequest,
